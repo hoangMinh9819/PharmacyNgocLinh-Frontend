@@ -5,14 +5,21 @@ import Modal from 'react-bootstrap/Modal';
 import ProductService from "../services/ProductService";
 import ReactPaginate from 'react-paginate';
 import UnitService from "../services/UnitService";
+import WareHouseService from "../services/WareHouseService";
 
 
 export default function ProductsComponent() {
     const [productsList, setProductsList] = useState([]);
-    const [unitList,setUnitList] = useState([])
+    const [unitList, setUnitList] = useState([])
+    const [warehousesList, setWarehousesList] = useState([]);
 // Update Product
     const [showUpdate, setShowUpdate] = useState(false);
     const [productUpdate, setProductUpdate] = useState([]);
+
+// Add Product In Warehouse
+    const [warehouseDetails, setWarehouseDetails] = useState([]);
+    const [showAddInWarehouse, setShowAddInWarehouse] = useState(false);
+    const [idProductAddInWarehouse, setIdProductAddInWarehouse] = useState(false);
 // Add Product
     const [productAdd, setProductAdd] = useState([]);
     const [showAdd, setShowAdd] = useState(false);
@@ -24,15 +31,15 @@ export default function ProductsComponent() {
     const [size, setSize] = useState(6);
     const [totalPages, setTotalPages] = useState(0);
 // Error message
-    const [errorMessage, setErrorMessage] =useState("");
+    const [errorMessage, setErrorMessage] = useState("");
 // Search
-    const [searchName,setSearchName] = useState("");
+    const [searchName, setSearchName] = useState("");
     // khởi taạo ban đau
     useEffect(() => {
         goToSearchName(page, size, searchName);
     }, [page, size, searchName]);
 
-    function getAllProducts(page,size) {
+    function getAllProducts(page, size) {
         ProductService.getProductsList(page, size).then((response) => {
             setProductsList(response.data.content);
             setTotalPages(response.data.totalPages);
@@ -41,9 +48,9 @@ export default function ProductsComponent() {
 
     function goToSearchName(page, size, name) {
         if (name.trim() === '') {
-            getAllProducts(page,size)
+            getAllProducts(page, size)
         } else {
-            ProductService.getProductsListByName(page,size,name).then((response) => {
+            ProductService.getProductsListByName(page, size, name).then((response) => {
                 setProductsList(response.data.content);
                 setTotalPages(response.data.totalPages);
             })
@@ -63,19 +70,21 @@ export default function ProductsComponent() {
     const updateProduct = () => {
         ProductService.updateProduct(productUpdate).then(() => {
             setShowUpdate(false);
-            getAllProducts(page,size);
+            getAllProducts(page, size);
         })
     }
+
     async function goToAdd() {
         await UnitService.getUnitsList().then((response) => {
             setUnitList(response.data);
         })
         setShowAdd(true);
     }
+
     const addProduct = () => {
         ProductService.addProduct(productAdd).then(() => {
             setShowAdd(false);
-            getAllProducts(page,size);
+            getAllProducts(page, size);
         })
     }
 
@@ -86,7 +95,7 @@ export default function ProductsComponent() {
 
     const deleteP = (id) => {
         ProductService.deleteProduct(id).then(() => {
-            getAllProducts(page,size);
+            getAllProducts(page, size);
             setShowDelete(false)
         }).catch(err => {
             console.log(err)
@@ -97,20 +106,41 @@ export default function ProductsComponent() {
     const handlePageClick = (event) => {
         setPage(event.selected);
     };
+
     function onSizeChange(v) {
-        if(v>0){
+        if (v > 0) {
             setSize(v);
             setErrorMessage("")
-        }else{
+        } else {
             setErrorMessage("row per page must be greater than zero");
         }
     }
+
+    async function goToAddInWarehouse(id) {
+        await WareHouseService.getWareHouseList().then((response) => {
+            setWarehousesList(response.data);
+        })
+        setIdProductAddInWarehouse(id);
+        setWarehouseDetails({
+            ...warehouseDetails, productId: id
+        })
+        setShowAddInWarehouse(true);
+    }
+
+    function addProductInWarehouse() {
+        console.log(warehouseDetails);
+        WareHouseService.addNewProductInWareHouse(warehouseDetails).then(() => {
+            setShowAddInWarehouse(false);
+            getAllProducts(page, size);
+        })
+    }
+
 // UI
     return (<>
         <Row className={'container-fluid'}>
             <Col>
-                <h1 style={{display:"inline", margin: "10px"}}>Products List</h1>
-                <Button style={{marginBottom:"15px"}} onClick={() => goToAdd()}>Add</Button>
+                <h1 style={{display: "inline", margin: "10px"}}>Products List</h1>
+                <Button style={{marginBottom: "15px"}} onClick={() => goToAdd()}>Add</Button>
             </Col>
         </Row>
         <InputGroup className="mb-3">
@@ -148,16 +178,20 @@ export default function ProductsComponent() {
                         <Button className="me-2" variant={"danger"} onClick={() => goToDelete(p.id)}>
                             <i className="bi bi-trash"></i>
                         </Button>
-                        <Button variant={"warning"}>
+                        <Button className="me-2" variant={"warning"}>
                             <i onClick={() => goToUpdate(p.id)} className="bi bi-pencil"></i>
-                        </Button></td>
+                        </Button>
+                        <Button variant={"success"}>
+                            <i onClick={() => goToAddInWarehouse(p.id)} className="bi-bag-plus"></i>
+                        </Button>
+                    </td>
                 </tr>)}
             </tbody>
         </Table>
         <form>
             <label htmlFor="html">Row per page</label>
-            <input type="number" id="html" value={size} onChange={(e)=>onSizeChange(e.target.value)}/>
-            <p style={{color:"red"}}>{errorMessage}</p>
+            <input type="number" id="html" value={size} onChange={(e) => onSizeChange(e.target.value)}/>
+            <p style={{color: "red"}}>{errorMessage}</p>
         </form>
         <ReactPaginate
             breakLabel="..."
@@ -289,7 +323,8 @@ export default function ProductsComponent() {
                             })}
                         >
                             <option value={null}>Choose your option</option>
-                            {unitList.map((unit, index) => (<option key={index} value={unit.name}>{unit.name}</option>))}
+                            {unitList.map((unit, index) => (
+                                <option key={index} value={unit.name}>{unit.name}</option>))}
                         </Form.Select>
                         <InputGroup.Text>Unit Purchase</InputGroup.Text>
                     </InputGroup>
@@ -299,7 +334,8 @@ export default function ProductsComponent() {
                             onChange={(e) => setProductAdd({...productAdd, unitSale: e.target.value})}
                         >
                             <option value={null}>Choose your option</option>
-                            {unitList.map((unit, index) => (<option key={index} value={unit.name}>{unit.name}</option>))}
+                            {unitList.map((unit, index) => (
+                                <option key={index} value={unit.name}>{unit.name}</option>))}
                         </Form.Select>
                         <InputGroup.Text>Unit Sale</InputGroup.Text>
                     </InputGroup>
@@ -318,7 +354,7 @@ export default function ProductsComponent() {
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button onClick={() => addProduct()}>Add Unit</Button>
+                <Button onClick={() => addProduct()}>Add Product</Button>
                 <Button onClick={() => setShowAdd(false)}>Close</Button>
             </Modal.Footer>
         </Modal>
@@ -333,6 +369,40 @@ export default function ProductsComponent() {
             <Modal.Footer>
                 <Button variant={"danger"} onClick={() => deleteP(idDelete)}>Delete</Button>
                 <Button onClick={() => setShowDelete(false)}>Close</Button>
+            </Modal.Footer>
+        </Modal>
+        {/*Modal Add In Warehouse*/}
+        <Modal show={showAddInWarehouse}>
+            <Modal.Header>
+                <Modal.Title>Add Product In Warehouse {idProductAddInWarehouse}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form>
+                    <InputGroup className="mb-3">
+                        <Form.Select
+                            onChange={(e) => setWarehouseDetails({
+                                ...warehouseDetails, wareHouseId: e.target.value
+                            })}
+                        >
+                            <option value={null}>Choose your option</option>
+                            {warehousesList.map((warehouse, index) => (
+                                <option key={index} value={warehouse.id}>{warehouse.name}</option>))}
+                        </Form.Select>
+                        <InputGroup.Text>Warehouse</InputGroup.Text>
+                    </InputGroup>
+
+                    <Form.Group className="mb-3">
+                        <Form.Control type="number" placeholder="Enter Quantity" name={"quantity"}
+                                      onChange={(e) => setWarehouseDetails({
+                                          ...warehouseDetails, [e.target.name]: e.target.value
+                                      })}
+                        />
+                    </Form.Group>
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button onClick={() => addProductInWarehouse()}>Add In Warehouse</Button>
+                <Button onClick={() => setShowAddInWarehouse(false)}>Close</Button>
             </Modal.Footer>
         </Modal>
     </>)

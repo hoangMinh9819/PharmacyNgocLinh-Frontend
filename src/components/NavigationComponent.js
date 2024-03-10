@@ -28,12 +28,13 @@ export default function NavigationComponent() {
                     <Nav.Link href="/products">Product</Nav.Link>
                     <DropdownButton id="dropdown-basic-button" title="Ware Houses">
                         {
-                            warehousesList.map((u) =>
-                                <Dropdown.Item href="/wareHouses">{u.name}</Dropdown.Item>
+                            warehousesList.map((u,index) =>
+                                <Dropdown.Item key={index} href={`/warehouses/${u.id}`}>{u.name}</Dropdown.Item>
                             )
                         }
                     </DropdownButton>
                     <Nav.Link href="/orders">Orders</Nav.Link>
+                    <Nav.Link href="/employees">Employees</Nav.Link>
                 </Nav>
             </Navbar.Collapse>
         </Container>

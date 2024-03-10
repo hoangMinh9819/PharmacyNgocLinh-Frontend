@@ -7,6 +7,7 @@ import WareHousesComponent from "./components/WareHousesComponent";
 import OrdersComponent from "./components/OrdersComponent";
 import LoginComponent from "./components/LoginComponent";
 import HomeComponent from "./components/HomeComponent";
+import EmployeesComponent from "./components/EmployeesComponent";
 
 function App() {
   return (
@@ -20,8 +21,9 @@ function App() {
                 <Route path="/login" element={<LoginComponent/>}/>
                 <Route path="/units" element={<UnitsComponent/>}/>
                 <Route path="/products" element={<ProductsComponent/>}/>
-                <Route path="/wareHouses" element={<WareHousesComponent/>}/>
+                <Route path="/wareHouses/:id" element={<WareHousesComponent/>}/>
                 <Route path="/orders" element={<OrdersComponent/>}/>
+                <Route path="/employees" element={<EmployeesComponent/>}/>
             </Routes>
           </Router>
       </div>
